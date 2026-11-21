@@ -82,4 +82,22 @@ public sealed class TicketsControllerTests
         Assert.Equal(5, result.PageSize);
         Assert.Equal(2, result.Items.Count);
     }
+
+    [Fact]
+    public async Task ListFiltersByPriority()
+    {
+        await using var db = CreateDb();
+        db.Tickets.AddRange(
+            new Ticket { Title = "Low ticket", Status = "open", Priority = "low" },
+            new Ticket { Title = "Medium ticket", Status = "open", Priority = "medium" },
+            new Ticket { Title = "High ticket", Status = "open", Priority = "high" });
+        await db.SaveChangesAsync();
+        var controller = new TicketsController(db);
+
+        var action = await controller.List(null, "high", null, 1, 5, CancellationToken.None);
+        var result = Assert.IsType<PagedResult<Ticket>>(action.Value);
+
+        Assert.Equal(1, result.Total);
+        Assert.Equal("High ticket", Assert.Single(result.Items).Title);
+    }
 }
