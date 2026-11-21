@@ -20,6 +20,7 @@ function App() {
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [summary, setSummary] = useState<TicketSummary | null>(null)
   const [status, setStatus] = useState<TicketStatus | ''>('')
+  const [priorityFilter, setPriorityFilter] = useState<TicketPriority | ''>('')
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -33,6 +34,7 @@ function App() {
     try {
       const params = new URLSearchParams({ pageSize: '50' })
       if (status) params.set('status', status)
+      if (priorityFilter) params.set('priority', priorityFilter)
       if (search) params.set('search', search)
       const [listResponse, summaryResponse] = await Promise.all([
         fetch(`/api/tickets?${params}`),
@@ -49,7 +51,7 @@ function App() {
     }
   }
 
-  useEffect(() => { void load() }, [status])
+  useEffect(() => { void load() }, [status, priorityFilter])
 
   const createTicket = async (event: FormEvent) => {
     event.preventDefault()
@@ -96,6 +98,9 @@ function App() {
         <select aria-label="Filter by status" value={status} onChange={e => setStatus(e.target.value as TicketStatus | '')}>
           <option value="">All statuses</option><option value="open">Open</option><option value="in_progress">In progress</option><option value="closed">Closed</option>
         </select>
+        <select aria-label="Filter by priority" value={priorityFilter} onChange={e => setPriorityFilter(e.target.value as TicketPriority | '')}>
+          <option value="">All priorities</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option>
+        </select>
         <button className="secondary" onClick={() => void load()}>Search</button>
       </section>
       <div className="layout">
@@ -110,9 +115,16 @@ function App() {
         </aside>
         <section className="content">
           {summary && <div className="summary">
-            <div><span>Open</span><strong>{summary.byStatus.open ?? 0}</strong></div>
-            <div><span>In progress</span><strong>{summary.byStatus.in_progress ?? 0}</strong></div>
-            <div><span>Closed</span><strong>{summary.byStatus.closed ?? 0}</strong></div>
+            <div className="summary-row">
+              <div><span>Open</span><strong>{summary.byStatus.open ?? 0}</strong></div>
+              <div><span>In progress</span><strong>{summary.byStatus.in_progress ?? 0}</strong></div>
+              <div><span>Closed</span><strong>{summary.byStatus.closed ?? 0}</strong></div>
+            </div>
+            <div className="summary-row priority-summary">
+              <div><span className="priority-label low">Low priority</span><strong>{summary.byPriority.low ?? 0}</strong></div>
+              <div><span className="priority-label medium">Medium priority</span><strong>{summary.byPriority.medium ?? 0}</strong></div>
+              <div><span className="priority-label high">High priority</span><strong>{summary.byPriority.high ?? 0}</strong></div>
+            </div>
           </div>}
           {loading ? <div className="loading">Loading tickets...</div> : tickets.length === 0 ? <div className="empty">No tickets found</div> :
             <div className="table-wrap"><table><thead><tr><th>Ticket</th><th>Priority</th><th>Status</th><th></th></tr></thead><tbody>

@@ -57,7 +57,7 @@ public sealed class TicketsControllerTests
         await db.SaveChangesAsync();
         var controller = new TicketsController(db);
 
-        var action = await controller.List("open", "Printer", 1, 10, CancellationToken.None);
+        var action = await controller.List("open", null, "Printer", 1, 10, CancellationToken.None);
         var result = Assert.IsType<PagedResult<Ticket>>(action.Value);
 
         Assert.Equal(1, result.Total);

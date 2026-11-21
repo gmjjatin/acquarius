@@ -11,7 +11,7 @@ public sealed class TicketsController(TicketDbContext db) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<PagedResult<Ticket>>> List(
-        [FromQuery] string? status, [FromQuery] string? search,
+        [FromQuery] string? status, [FromQuery] string? priority, [FromQuery] string? search,
         [FromQuery] int page = 1, [FromQuery] int pageSize = 10,
         CancellationToken cancellationToken = default)
     {
@@ -19,10 +19,14 @@ public sealed class TicketsController(TicketDbContext db) : ControllerBase
             return Problem("Page must be at least 1 and pageSize must be between 1 and 100.", statusCode: 400);
         if (status is not null && status is not ("open" or "in_progress" or "closed"))
             return Problem("Status must be open, in_progress, or closed.", statusCode: 400);
+        if (priority is not null && priority is not ("low" or "medium" or "high"))
+            return Problem("Priority must be low, medium, or high.", statusCode: 400);
 
         IQueryable<Ticket> query = db.Tickets.AsNoTracking();
         if (!string.IsNullOrWhiteSpace(status))
             query = query.Where(x => x.Status == status);
+        if (!string.IsNullOrWhiteSpace(priority))
+            query = query.Where(x => x.Priority == priority);
         if (!string.IsNullOrWhiteSpace(search))
             query = query.Where(x => EF.Functions.Like(x.Title, $"%{search}%"));
 
