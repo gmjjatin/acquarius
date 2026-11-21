@@ -27,6 +27,8 @@ function App() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [priority, setPriority] = useState<TicketPriority>('medium')
+  const [expandedTitles, setExpandedTitles] = useState<Set<string>>(new Set())
+  const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(new Set())
 
   const load = async () => {
     setLoading(true)
@@ -89,6 +91,24 @@ function App() {
     await load()
   }
 
+  const toggleDescription = (id: string) => {
+    setExpandedDescriptions(current => {
+      const next = new Set(current)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const toggleTitle = (id: string) => {
+    setExpandedTitles(current => {
+      const next = new Set(current)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
   return (
     <main>
       <header><div><span className="eyebrow">ACQUARIUS SUPPORT</span><h1>Ticket Tracker</h1></div><span className="count">{tickets.length} tickets</span></header>
@@ -129,7 +149,30 @@ function App() {
           {loading ? <div className="loading">Loading tickets...</div> : tickets.length === 0 ? <div className="empty">No tickets found</div> :
             <div className="table-wrap"><table><thead><tr><th>Ticket</th><th>Priority</th><th>Status</th><th></th></tr></thead><tbody>
               {tickets.map(ticket => <tr key={ticket.id}>
-                <td><strong>{ticket.title}</strong><small>{ticket.description || 'No description'}</small></td>
+                <td>
+                  {ticket.title.length > 60
+                    ? <div className="ticket-title-block">
+                        <strong className={expandedTitles.has(ticket.id) ? 'ticket-title expanded' : 'ticket-title'} title={ticket.title}>
+                          {expandedTitles.has(ticket.id) ? ticket.title : `${ticket.title.slice(0, 60)}...`}
+                        </strong>
+                        <button type="button" className="description-toggle title-toggle" onClick={() => toggleTitle(ticket.id)}>
+                          {expandedTitles.has(ticket.id) ? 'See less' : 'See more'}
+                        </button>
+                      </div>
+                    : <strong className="ticket-title">{ticket.title}</strong>}
+                  {!ticket.description
+                    ? <small>No description</small>
+                    : ticket.description.length > 120
+                      ? <div className="ticket-description">
+                          {expandedDescriptions.has(ticket.id)
+                            ? <small>{ticket.description}</small>
+                            : <small>{ticket.description.slice(0, 120)}...</small>}
+                          <button type="button" className="description-toggle" onClick={() => toggleDescription(ticket.id)}>
+                            {expandedDescriptions.has(ticket.id) ? 'See less' : 'See more'}
+                          </button>
+                        </div>
+                      : <small>{ticket.description}</small>}
+                </td>
                 <td><span className={`badge ${ticket.priority}`}>{ticket.priority}</span></td>
                 <td><select value={ticket.status} onChange={e => void changeStatus(ticket, e.target.value as TicketStatus)}><option value="open">Open</option><option value="in_progress">In progress</option><option value="closed">Closed</option></select></td>
                 <td><button className="danger" onClick={() => void deleteTicket(ticket.id)}>Delete</button></td>
