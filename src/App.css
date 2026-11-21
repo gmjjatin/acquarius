@@ -271,6 +271,22 @@ td small {
   font-size: 12px
 }
 
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 14px 16px;
+  border-top: 1px solid #edf1f6;
+  color: #64748b;
+  font-size: 13px
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed
+}
+
 .badge {
   border-radius: 999px;
   padding: 5px 9px;

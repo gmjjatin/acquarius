@@ -63,4 +63,22 @@ public sealed class TicketsControllerTests
         Assert.Equal(1, result.Total);
         Assert.Equal("Printer offline", Assert.Single(result.Items).Title);
     }
+
+    [Fact]
+    public async Task ListSupportsFiveTicketPages()
+    {
+        await using var db = CreateDb();
+        for (var i = 1; i <= 7; i++)
+            db.Tickets.Add(new Ticket { Title = $"Ticket {i}", Status = "open", Priority = "medium" });
+        await db.SaveChangesAsync();
+        var controller = new TicketsController(db);
+
+        var action = await controller.List(null, null, null, 2, 5, CancellationToken.None);
+        var result = Assert.IsType<PagedResult<Ticket>>(action.Value);
+
+        Assert.Equal(7, result.Total);
+        Assert.Equal(2, result.Page);
+        Assert.Equal(5, result.PageSize);
+        Assert.Equal(2, result.Items.Count);
+    }
 }

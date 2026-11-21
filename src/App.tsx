@@ -29,12 +29,14 @@ function App() {
   const [priority, setPriority] = useState<TicketPriority>('medium')
   const [expandedTitles, setExpandedTitles] = useState<Set<string>>(new Set())
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(new Set())
+  const [page, setPage] = useState(1)
+  const [totalTickets, setTotalTickets] = useState(0)
 
-  const load = async () => {
+  const load = async (requestedPage = page) => {
     setLoading(true)
     setError('')
     try {
-      const params = new URLSearchParams({ pageSize: '50' })
+      const params = new URLSearchParams({ page: requestedPage.toString(), pageSize: '5' })
       if (status) params.set('status', status)
       if (priorityFilter) params.set('priority', priorityFilter)
       if (search) params.set('search', search)
@@ -45,6 +47,10 @@ function App() {
       if (!listResponse.ok || !summaryResponse.ok) throw new Error('Unable to load tickets')
       const list = await listResponse.json() as PagedResult
       setTickets(list.items)
+      setTotalTickets(list.total)
+      setPage(list.page)
+      const maxPage = Math.max(1, Math.ceil(list.total / list.pageSize))
+      if (list.page > maxPage) void load(maxPage)
       setSummary(await summaryResponse.json() as TicketSummary)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Unable to load tickets')
@@ -53,7 +59,7 @@ function App() {
     }
   }
 
-  useEffect(() => { void load() }, [status, priorityFilter])
+  useEffect(() => { void load() }, [status, priorityFilter, page])
 
   const createTicket = async (event: FormEvent) => {
     event.preventDefault()
@@ -111,17 +117,17 @@ function App() {
 
   return (
     <main>
-      <header><div><span className="eyebrow">ACQUARIUS SUPPORT</span><h1>Ticket Tracker</h1></div><span className="count">{tickets.length} tickets</span></header>
+      <header><div><span className="eyebrow">ACQUARIUS SUPPORT</span><h1>Ticket Tracker</h1></div><span className="count">{totalTickets} tickets</span></header>
       {error && <div className="error" role="alert">{error}</div>}
       <section className="toolbar">
-        <input aria-label="Search tickets" placeholder="Search by title..." value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && void load()} />
-        <select aria-label="Filter by status" value={status} onChange={e => setStatus(e.target.value as TicketStatus | '')}>
+        <input aria-label="Search tickets" placeholder="Search by title..." value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { setPage(1); void load(1) } }} />
+        <select aria-label="Filter by status" value={status} onChange={e => { setPage(1); setStatus(e.target.value as TicketStatus | '') }}>
           <option value="">All statuses</option><option value="open">Open</option><option value="in_progress">In progress</option><option value="closed">Closed</option>
         </select>
-        <select aria-label="Filter by priority" value={priorityFilter} onChange={e => setPriorityFilter(e.target.value as TicketPriority | '')}>
+        <select aria-label="Filter by priority" value={priorityFilter} onChange={e => { setPage(1); setPriorityFilter(e.target.value as TicketPriority | '') }}>
           <option value="">All priorities</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option>
         </select>
-        <button className="secondary" onClick={() => void load()}>Search</button>
+        <button className="secondary" onClick={() => { setPage(1); void load(1) }}>Search</button>
       </section>
       <div className="layout">
         <aside>
@@ -178,6 +184,12 @@ function App() {
                 <td><button className="danger" onClick={() => void deleteTicket(ticket.id)}>Delete</button></td>
               </tr>)}
             </tbody></table></div>}
+          {!loading && totalTickets > 5 &&
+            <nav className="pagination" aria-label="Ticket pagination">
+              <button type="button" className="secondary" disabled={page <= 1} onClick={() => setPage(current => current - 1)}>Previous</button>
+              <span>Page {page} of {Math.ceil(totalTickets / 5)}</span>
+              <button type="button" className="secondary" disabled={page >= Math.ceil(totalTickets / 5)} onClick={() => setPage(current => current + 1)}>Next</button>
+            </nav>}
         </section>
       </div>
     </main>
