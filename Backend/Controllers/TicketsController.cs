@@ -23,6 +23,7 @@ public sealed class TicketsController(TicketDbContext db) : ControllerBase
             return Problem("Priority must be low, medium, or high.", statusCode: 400);
 
         IQueryable<Ticket> query = db.Tickets.AsNoTracking();
+        // Apply filters before counting and paging so the total and page items describe the same result set.
         if (!string.IsNullOrWhiteSpace(status))
             query = query.Where(x => x.Status == status);
         if (!string.IsNullOrWhiteSpace(priority))
@@ -31,6 +32,7 @@ public sealed class TicketsController(TicketDbContext db) : ControllerBase
             query = query.Where(x => EF.Functions.Like(x.Title, $"%{search}%"));
 
         var total = await query.CountAsync(cancellationToken);
+        // Skip completed pages and take only the requested page size to limit query and payload size.
         var items = await query.OrderByDescending(x => x.CreatedAt)
             .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(cancellationToken);
 
@@ -87,6 +89,7 @@ public sealed class TicketsController(TicketDbContext db) : ControllerBase
     [HttpGet("summary")]
     public async Task<ActionResult<TicketSummary>> Summary(CancellationToken cancellationToken)
     {
+        // Summary counts are independent of list filters and represent the complete ticket inventory.
         var statusRows = await db.Tickets.AsNoTracking()
             .GroupBy(x => x.Status).Select(x => new { x.Key, Count = x.Count() }).ToListAsync(cancellationToken);
         var priorityRows = await db.Tickets.AsNoTracking()

@@ -67,6 +67,7 @@ public sealed class TicketsControllerTests
     [Fact]
     public async Task ListSupportsFiveTicketPages()
     {
+        // Verify both page metadata and that a partial final page contains only remaining items.
         await using var db = CreateDb();
         for (var i = 1; i <= 7; i++)
             db.Tickets.Add(new Ticket { Title = $"Ticket {i}", Status = "open", Priority = "medium" });

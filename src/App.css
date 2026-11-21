@@ -1,3 +1,4 @@
+/* Page shell */
 main {
   min-height: 100vh;
   background: #f6f7fb;
@@ -34,6 +35,7 @@ h1 {
   font-weight: 700
 }
 
+/* Filters and search */
 .toolbar {
   display: flex;
   gap: 10px;
@@ -140,6 +142,7 @@ button {
   border-radius: 8px
 }
 
+/* Status and priority summaries */
 .summary {
   border-bottom: 1px solid #e8edf5
 }
@@ -198,6 +201,7 @@ button {
   color: #991b1b
 }
 
+/* Ticket table and expandable text */
 .table-wrap {
   overflow-x: auto
 }
@@ -271,6 +275,7 @@ td small {
   font-size: 12px
 }
 
+/* Pagination */
 .pagination {
   display: flex;
   align-items: center;

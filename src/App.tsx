@@ -32,6 +32,7 @@ function App() {
   const [page, setPage] = useState(1)
   const [totalTickets, setTotalTickets] = useState(0)
 
+  // Load the current filter/search selection together with the matching summary counts.
   const load = async (requestedPage = page) => {
     setLoading(true)
     setError('')
@@ -49,6 +50,7 @@ function App() {
       setTickets(list.items)
       setTotalTickets(list.total)
       setPage(list.page)
+      // Filters or deletions can remove the final page; return to the last valid page.
       const maxPage = Math.max(1, Math.ceil(list.total / list.pageSize))
       if (list.page > maxPage) void load(maxPage)
       setSummary(await summaryResponse.json() as TicketSummary)
@@ -98,6 +100,7 @@ function App() {
   }
 
   const toggleDescription = (id: string) => {
+    // Track expansion per ticket so the table does not collapse one row's state when another row changes.
     setExpandedDescriptions(current => {
       const next = new Set(current)
       if (next.has(id)) next.delete(id)
@@ -107,6 +110,7 @@ function App() {
   }
 
   const toggleTitle = (id: string) => {
+    // Keep title expansion independent from description expansion for accurate per-row controls.
     setExpandedTitles(current => {
       const next = new Set(current)
       if (next.has(id)) next.delete(id)
@@ -156,6 +160,7 @@ function App() {
             <div className="table-wrap"><table><thead><tr><th>Ticket</th><th>Priority</th><th>Status</th><th></th></tr></thead><tbody>
               {tickets.map(ticket => <tr key={ticket.id}>
                 <td>
+                  {/* Truncate long titles in the table while preserving full text in the tooltip and expansion control. */}
                   {ticket.title.length > 60
                     ? <div className="ticket-title-block">
                         <strong className={expandedTitles.has(ticket.id) ? 'ticket-title expanded' : 'ticket-title'} title={ticket.title}>
@@ -170,6 +175,7 @@ function App() {
                     ? <small>No description</small>
                     : ticket.description.length > 120
                       ? <div className="ticket-description">
+                          {/* Show a bounded preview before revealing the complete customer-provided description. */}
                           {expandedDescriptions.has(ticket.id)
                             ? <small>{ticket.description}</small>
                             : <small>{ticket.description.slice(0, 120)}...</small>}

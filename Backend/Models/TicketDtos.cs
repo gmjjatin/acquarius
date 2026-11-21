@@ -32,6 +32,7 @@ public sealed class UpdateTicketRequest
 
 public sealed class PagedResult<T>
 {
+    // Metadata lets API consumers render pagination controls and verify the active page.
     public IReadOnlyList<T> Items { get; init; } = Array.Empty<T>();
     public int Page { get; init; }
     public int PageSize { get; init; }
